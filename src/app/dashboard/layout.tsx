@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/toaster";
 import AppWalletProvider from "../components/WalletAdapter";
 
 export default function RootLayout({

@@ -1,12 +1,9 @@
-"use clients";
+"use client";
+
 import React, { useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ConnectionProvider,
-  WalletProvider,
-  useWallet,
-} from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
   Zap,
   Wallet,
@@ -17,8 +14,21 @@ import {
   LogOut,
   BarChart,
   Cloud,
-  Cpu,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 interface DeploymentData {
   siteName: string;
@@ -54,13 +64,53 @@ const recentDeployments: DeploymentData[] = [
   },
 ];
 
-const uploadhandler: any = async () => {
-  // const cid = await uploadFolderToPinata('../../../output/9hbgn');
+const uploadhandler = async () => {
   console.log("cid is the ");
 };
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("deployments");
+  const [repo, setRepo] = useState("");
+  const [branch, setBranch] = useState("");
   const { publicKey } = useWallet();
+  const { toast } = useToast();
+
+  const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/deploy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          repo,
+          branch,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Deployment Successful",
+          description: "Your project has been successfully deployed.",
+        });
+      } else {
+        throw new Error(result.message || "Failed to deploy");
+      }
+    } catch (error) {
+      toast({
+        title: "Deployment Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden font-sans"
@@ -74,17 +124,23 @@ export default function Dashboard() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
+          {/* Sidebar content remains the same */}
           <div className="flex items-center justify-center mb-8">
             <Zap className="h-8 w-8 text-purple-500 mr-2" />
+
             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
               Solynx
             </span>
           </div>
+
           <nav className="space-y-4">
             {[
               { icon: Box, label: "Deployments", value: "deployments" },
+
               { icon: Globe, label: "Domains", value: "domains" },
+
               { icon: BarChart, label: "Analytics", value: "analytics" },
+
               { icon: Settings, label: "Settings", value: "settings" },
             ].map((item) => (
               <button
@@ -97,6 +153,7 @@ export default function Dashboard() {
                 onClick={() => setActiveTab(item.value)}
               >
                 <item.icon className="mr-2 h-5 w-5" />
+
                 {item.label}
               </button>
             ))}
@@ -112,9 +169,11 @@ export default function Dashboard() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
+            {/* Header content remains the same */}
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
               Dashboard
             </h1>
+
             <div className="flex items-center space-x-4">
               <div className="border hover:border-slate-900 rounded">
                 <WalletMultiButton style={{}} />
@@ -123,6 +182,7 @@ export default function Dashboard() {
               <button className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-purple-800 transition-colors duration-300">
                 <HelpCircle className="h-5 w-5" />
               </button>
+
               <button className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-purple-800 transition-colors duration-300">
                 <LogOut className="h-5 w-5" />
               </button>
@@ -161,172 +221,158 @@ export default function Dashboard() {
               ].map((stat, index) => (
                 <motion.div
                   key={stat.title}
-                  className="bg-black bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-purple-800"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <div className="flex justify-between items-start">
-                    <p className="text-sm font-medium text-gray-400">
-                      {stat.title}
-                    </p>
-                    <stat.icon
-                      className={`h-5 w-5 text-transparent bg-clip-text bg-gradient-to-br ${stat.color}`}
-                    />
-                  </div>
-                  <p
-                    className={`text-2xl font-bold mt-2 bg-clip-text text-transparent bg-gradient-to-br ${stat.color}`}
-                  >
-                    {stat.value}
-                  </p>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-gray-400">
+                        {stat.title}
+                      </CardTitle>
+                      <stat.icon
+                        className={`h-5 w-5 text-transparent bg-clip-text bg-gradient-to-br ${stat.color}`}
+                      />
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-br ${stat.color}`}
+                      >
+                        {stat.value}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </motion.div>
               ))}
             </div>
 
             {/* Recent Deployments */}
             <motion.div
-              className="bg-black bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-purple-800"
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                Recent Deployments
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-gray-400">
-                      <th className="pb-3">Site Name</th>
-                      <th className="pb-3">Status</th>
-                      <th className="pb-3">Domain</th>
-                      <th className="pb-3">Last Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentDeployments.map((deployment, index) => (
-                      <tr key={index} className="border-t border-purple-800">
-                        <td className="py-3 font-medium">
-                          {deployment.siteName}
-                        </td>
-                        <td className="py-3">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              deployment.status === "Live"
-                                ? "bg-green-500 text-green-900"
-                                : deployment.status === "Building"
-                                ? "bg-yellow-500 text-yellow-900"
-                                : "bg-red-500 text-red-900"
-                            }`}
-                          >
-                            {deployment.status}
-                          </span>
-                        </td>
-                        <td className="py-3 text-blue-400">
-                          {deployment.domain}
-                        </td>
-                        <td className="py-3 text-gray-400">
-                          {deployment.lastUpdated}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                    Recent Deployments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Site Name</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentDeployments.map((deployment, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {deployment.siteName}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                deployment.status === "Live"
+                                  ? "bg-green-500 text-green-900"
+                                  : deployment.status === "Building"
+                                  ? "bg-yellow-500 text-yellow-900"
+                                  : "bg-red-500 text-red-900"
+                              }`}
+                            >
+                              {deployment.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-blue-400">
+                            {deployment.domain}
+                          </TableCell>
+                          <TableCell className="text-gray-400">
+                            {deployment.lastUpdated}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </motion.div>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Quick Deploy */}
               <motion.div
-                className="bg-black bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-purple-800"
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <h2 className="text-xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                  Quick Deploy
-                </h2>
-                <form className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="repo"
-                      className="block text-sm font-medium text-gray-400 mb-1"
-                    >
-                      GitHub Repository
-                    </label>
-                    <input
-                      id="repo"
-                      type="text"
-                      placeholder="username/repository"
-                      className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-purple-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="branch"
-                      className="block text-sm font-medium text-gray-400 mb-1"
-                    >
-                      Branch
-                    </label>
-                    <input
-                      id="branch"
-                      type="text"
-                      placeholder="main"
-                      className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-purple-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <button className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300 flex items-center justify-center">
-                    <Zap className="mr-2 h-5 w-5" />
-                    Deploy
-                  </button>
-                </form>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                      Quick Deploy
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleDeploy} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="repo">GitHub Repository</Label>
+                        <Input
+                          id="repo"
+                          value={repo}
+                          onChange={(e) => setRepo(e.target.value)}
+                          placeholder="username/repository"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="branch">Branch</Label>
+                        <Input
+                          id="branch"
+                          value={branch}
+                          onChange={(e) => setBranch(e.target.value)}
+                          placeholder="main"
+                        />
+                      </div>
+                      <Button type="submit" className="w-full">
+                        <Zap className="mr-2 h-5 w-5" />
+                        Deploy
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
               </motion.div>
 
               {/* Domain Management */}
               <motion.div
-                className="bg-black bg-opacity-50 backdrop-filter backdrop-blur-lg rounded-xl p-6 border border-purple-800"
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <h2 className="text-xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                  Domain Management
-                </h2>
-                <form className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="domain"
-                      className="block text-sm font-medium text-gray-400 mb-1"
-                    >
-                      Domain Name
-                    </label>
-                    <input
-                      id="domain"
-                      type="text"
-                      placeholder="mydomain.sol"
-                      className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-purple-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="target"
-                      className="block text-sm font-medium text-gray-400 mb-1"
-                    >
-                      Target Deployment
-                    </label>
-                    <input
-                      id="target"
-                      type="text"
-                      placeholder="Select deployment"
-                      className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-purple-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
-                    />
-                  </div>
-                  <button className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 transition-all duration-300 flex items-center justify-center">
-                    <Globe className="mr-2 h-5 w-5" />
-                    Update Domain
-                  </button>
-                </form>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                      Domain Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="domain">Domain Name</Label>
+                        <Input id="domain" placeholder="mydomain.sol" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="target">Target Deployment</Label>
+                        <Input id="target" placeholder="Select deployment" />
+                      </div>
+                      <Button className="w-full">
+                        <Globe className="mr-2 h-5 w-5" />
+                        Update Domain
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
               </motion.div>
             </div>
           </main>
