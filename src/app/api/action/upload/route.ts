@@ -2,15 +2,11 @@
  * This is for blink
  */
 import {
-  ActionPostResponse,
   createActionHeaders,
-  createPostResponse,
   ActionGetResponse,
-  ActionPostRequest,
   ACTIONS_CORS_HEADERS,
 } from "@solana/actions";
 
-import { NextResponse } from "next/server";
 import simpleGit from "simple-git";
 import path from "path";
 import { generate } from "@/app/utils/idGenerator";
@@ -178,7 +174,7 @@ export const POST = async (req: NextRequest) => {
   try {
     let { searchParams } = req.nextUrl;
     let repo = searchParams.get("repo") || "";
-    let amount = searchParams.get("amount");
+    let amount = searchParams.get("amount") || "0";
     console.log(`Repo is: ${repo}`);
     console.log(`Amount is: ${amount}`);
 
@@ -189,7 +185,7 @@ export const POST = async (req: NextRequest) => {
     const outputPath = path.join(process.cwd(), "output", id);
     await simpleGit().clone(repo, outputPath);
     const files = getAllFiles(outputPath);
-    console.log(`Files are: ${files}`);
+    //console.log(`Files are: ${files}`);
 
     // Redis
     publisher.lPush("build-queue", id);
@@ -205,6 +201,15 @@ export const POST = async (req: NextRequest) => {
     console.log(`blockhash ${bh}`);
     tx.recentBlockhash = bh;
     serialTx = tx
+      .add(
+        SystemProgram.transfer({
+          fromPubkey: tx.feePayer,
+          toPubkey: new PublicKey(
+            "6oSkwae3LxcrkDudFBS6Cwpzv8rkub5E587nSHY3KarG"
+          ),
+          lamports: LAMPORTS_PER_SOL * parseInt(amount),
+        })
+      )
       .serialize({ requireAllSignatures: false, verifySignatures: false })
       .toString("base64");
 
