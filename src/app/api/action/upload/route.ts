@@ -6,6 +6,7 @@ import {
   ActionPostRequest,
   ACTIONS_CORS_HEADERS,
 } from "@solana/actions";
+
 import { NextResponse } from "next/server";
 import simpleGit from "simple-git";
 import path from "path";
@@ -24,6 +25,7 @@ import {
 import { NextRequest } from "next/server";
 
 const headers = createActionHeaders({ actionVersion: "2.2.1" });
+const connection = new Connection("https://api.devnet.solana.com");
 
 const publisher = createClient();
 publisher.connect();
@@ -47,7 +49,7 @@ export const GET = async (req: Request) => {
         actions: [
           {
             label: "Deploy",
-            href: "/api/action/deploy?repo={repo}&amount={amount}",
+            href: "/api/action/upload?repo={repo}&amount={amount}",
             parameters: [
               {
                 type: "select",
@@ -55,20 +57,16 @@ export const GET = async (req: Request) => {
                 label: "Select Deployment Plan",
                 required: true,
                 options: [
-                  { label: "Free Deploy", value: "0" },
-                  { label: "Quick Deploy", value: "1" },
-                  { label: "Priority Deploy", value: "5" },
+                  { label: "Free Deploy [0 SOL]", value: "0" },
+                  { label: "Quick Deploy [1 SOL]", value: "1" },
+                  { label: "Priority Deploy [5 SOL]", value: "5" },
                 ],
               },
               {
                 type: "text",
-                name: "repo", // parameter name in the `href` above
+                name: "repo",
                 label: "https://github.com/username/repo", // placeholder of the text input
                 required: true,
-                // options: [
-                //   { label: "Yes", value: "1" },
-                //   { label: "No", value: "0" },
-                // ],
               },
             ],
           },
@@ -193,14 +191,26 @@ export const POST = async (req: NextRequest) => {
     // Redis
     publisher.lPush("build-queue", id);
 
-    // Payload
-    const payload = {
-      type: "success",
-      title: "Repository Cloned",
-      description: `Successfully cloned and queued for processing. ID: ${id}`,
+    // Payload [transaction and message]
+    let serialTx: string;
+    const tx = new Transaction();
+    const user = await req.json();
+    tx.feePayer = new PublicKey(user.account);
+    const bh = (
+      await connection.getLatestBlockhash({ commitment: "finalized" })
+    ).blockhash;
+    console.log(`blockhash ${bh}`);
+    tx.recentBlockhash = bh;
+    serialTx = tx
+      .serialize({ requireAllSignatures: false, verifySignatures: false })
+      .toString("base64");
+
+    const response = {
+      transaction: serialTx,
+      message: `Successfully cloned and queued for processing. ID: ${id}`,
     };
 
-    return Response.json(payload, {
+    return Response.json(response, {
       status: 200,
       headers: ACTIONS_CORS_HEADERS,
     });
