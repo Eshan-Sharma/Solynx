@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
 
 import {
   Zap,
@@ -68,11 +75,32 @@ const recentDeployments: DeploymentData[] = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("deployments");
-  const [repo, setRepo] = useState("");
-  const [branch, setBranch] = useState("");
+  const [repo, setRepo] = useState("https://github.com/Eshan-Sharma/SolRaise");
+  const [branch, setBranch] = useState("main");
   const [amount, setAmount] = useState("0");
-  const { publicKey, signTransaction, connected } = useWallet();
+  const { publicKey, signTransaction, connected, sendTransaction } =
+    useWallet();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [balance, setBalance] = useState(0);
+
+  const connection = new Connection("https://api.devnet.solana.com");
+
+  useEffect(() => {
+    setIsClient(true);
+
+    const fetchBalance = async (publicKey: any) => {
+      try {
+        const balance = await connection.getBalance(publicKey);
+        const solAmount = balance / LAMPORTS_PER_SOL;
+        setBalance(solAmount);
+      } catch (error) {
+        setBalance(0);
+        console.error("Error fetching SOL balance:", error);
+      }
+    };
+    fetchBalance(publicKey);
+  }, [publicKey]);
   const handleRadioChange = (value: string) => {
     console.log(`Radio button value is ${value}`);
     setAmount(value);
@@ -80,7 +108,43 @@ export default function Dashboard() {
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!publicKey || !connected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your Solana wallet first.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
+      const recipient = new PublicKey(
+        "6oSkwae3LxcrkDudFBS6Cwpzv8rkub5E587nSHY3KarG"
+      );
+      const solAmount = parseFloat(amount) * LAMPORTS_PER_SOL;
+      // Create a new transaction
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: recipient,
+          lamports: solAmount,
+        })
+      );
+      // Sign and send the transaction
+      const signature = await sendTransaction(transaction, connection);
+      // Confirm the transaction
+      const confirmation = await connection.confirmTransaction(
+        signature,
+        "processed"
+      );
+
+      if (confirmation.value.err) {
+        throw new Error("Transaction failed");
+      } else {
+        toast({
+          title: "Transaction Successful",
+          description: `You have sent ${amount} SOL to the recipient.`,
+        });
+      }
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: {
@@ -91,6 +155,7 @@ export default function Dashboard() {
           amount: amount,
         }),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to initiate deployment");
@@ -179,7 +244,7 @@ export default function Dashboard() {
 
             <div className="flex items-center space-x-4">
               <div className="border hover:border-slate-900 rounded">
-                <WalletMultiButton style={{}} />
+                {isClient && <WalletMultiButton />}
               </div>
 
               <button className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-purple-800 transition-colors duration-300">
@@ -205,7 +270,7 @@ export default function Dashboard() {
                 },
                 {
                   title: "Active Domains",
-                  value: "7",
+                  value: "4",
                   icon: Globe,
                   color: "from-green-400 to-blue-500",
                 },
@@ -217,7 +282,7 @@ export default function Dashboard() {
                 },
                 {
                   title: "SOL Balance",
-                  value: "4.2 SOL",
+                  value: balance + " SOL",
                   icon: Wallet,
                   color: "from-indigo-400 to-cyan-400",
                 },
