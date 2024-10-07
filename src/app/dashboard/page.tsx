@@ -75,7 +75,7 @@ const recentDeployments: DeploymentData[] = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("deployments");
-  const [repo, setRepo] = useState("https://github.com/Eshan-Sharma/SolRaise");
+  const [repo, setRepo] = useState("");
   const [branch, setBranch] = useState("main");
   const [amount, setAmount] = useState("0");
   const { publicKey, signTransaction, connected, sendTransaction } =
@@ -391,7 +391,7 @@ export default function Dashboard() {
                           id="repo"
                           value={repo}
                           onChange={(e) => setRepo(e.target.value)}
-                          placeholder="username/repository"
+                          placeholder="https://github.com/username/repository"
                         />
                       </div>
                       <div className="space-y-2">
