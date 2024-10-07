@@ -13,14 +13,15 @@ const publisher = createClient();
 publisher.connect();
 export async function POST(request: Request) {
   try {
-    const { repoUrl } = await request.json();
+    const { repoUrl, amount } = await request.json();
     if (!repoUrl) {
       return NextResponse.json(
         { error: "Repository URL is required" },
         { status: 400 }
       );
     }
-    console.log("Received URL " + repoUrl);
+    console.log("Received URL: " + repoUrl);
+    console.log("Received amount: " + amount);
     const id = generate();
 
     const outputPath = path.join(process.cwd(), "output", id);
