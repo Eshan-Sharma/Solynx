@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import {
   Zap,
   Wallet,
@@ -64,33 +66,37 @@ const recentDeployments: DeploymentData[] = [
   },
 ];
 
-const uploadhandler = async () => {
-  console.log("cid is the ");
-};
-
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("deployments");
   const [repo, setRepo] = useState("");
   const [branch, setBranch] = useState("");
-  const { publicKey } = useWallet();
+  const [amount, setAmount] = useState("0");
+  const { publicKey, signTransaction, connected } = useWallet();
   const { toast } = useToast();
+  const handleRadioChange = (value: string) => {
+    console.log(`Radio button value is ${value}`);
+    setAmount(value);
+  };
 
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch("/api/deploy", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          repo,
-          branch,
+          repoUrl: repo,
+          amount: amount,
         }),
       });
-
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to initiate deployment");
+      }
       const result = await response.json();
-
+      console.log(`Deployment scheduled redis id: ${result.id}`);
       if (response.ok) {
         toast({
           title: "Deployment Successful",
@@ -112,10 +118,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden font-sans"
-      onClick={uploadhandler}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden font-sans">
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
         <motion.aside
@@ -334,6 +337,31 @@ export default function Dashboard() {
                           onChange={(e) => setBranch(e.target.value)}
                           placeholder="main"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <RadioGroup
+                          defaultValue="0"
+                          onValueChange={handleRadioChange}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="0" id="free-deploy" />
+                            <Label htmlFor="free-deploy">
+                              Free Deploy [0 SOL]
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1" id="quick-deploy" />
+                            <Label htmlFor="quick-deploy">
+                              Quick Deploy [1 SOL]
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="5" id="priority-deploy" />
+                            <Label htmlFor="priority-deploy">
+                              Priority Deploy [5 SOL]
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
                       <Button type="submit" className="w-full">
                         <Zap className="mr-2 h-5 w-5" />
