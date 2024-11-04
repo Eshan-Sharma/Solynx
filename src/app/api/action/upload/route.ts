@@ -41,7 +41,7 @@ export const GET = async (req: Request) => {
     //https://imgcdn.dev/i/Fiu7e
     const payload: ActionGetResponse = {
       title: "Deploy on Solynx",
-      icon: "https://s6.imgcdn.dev/Fiu7e.jpg",
+      icon: "https://bafybeibagjmvlztpgswjqxzwwj7fuoct3a4tbkdxjk3qllj7nsrtoaigna.ipfs.w3s.link/Solynx_icon.jpg",
       description: "One click decentralized deploy.",
       label: "Quick Deploy",
       links: {
