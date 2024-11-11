@@ -55,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { idGenerate } from "@/app/utils/idGenerator";
 interface DeploymentData {
   siteName: string;
   status: "Live" | "Building" | "Failed";
@@ -121,11 +122,12 @@ export default function Dashboard() {
       fetchBalance(publicKey);
     }
   }, [publicKey, connection]);
+  //debug tool
   const handleRadioChange = (value: string) => {
     console.log(`Radio button value is ${value}`);
     setAmount(value);
   };
-
+  //here
   const handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!publicKey || !connected) {
@@ -165,6 +167,7 @@ export default function Dashboard() {
           description: `You have sent ${amount} SOL to the recipient.`,
         });
       }
+      const id = idGenerate();
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: {
@@ -173,6 +176,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           repoUrl: repo,
           amount: amount,
+          id: id,
         }),
       });
 
@@ -201,6 +205,7 @@ export default function Dashboard() {
       });
     }
   };
+  //v2
   const handleUpdateDomain = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (selectedDeployment && newDomain) {
