@@ -4,9 +4,8 @@ import path from "path";
 import { getAllFilesAndFolders } from "@/app/utils/getFileAndFolder";
 import { uploadToArweave } from "@/app/utils/uploadToArweave";
 import { createClient } from "redis";
-import { execSync } from "child_process";
 
-// import { uploadFile } from '@/utils/ipfsUploader'
+// import { uploadFile } from '@/utils/ipfsUploader' - TODO?
 // Redis Connection
 const publisher = createClient();
 publisher.connect();
