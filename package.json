@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@golem-sdk/golem-js": "^3.5.0",
+    "@golem-sdk/pino-logger": "^1.1.0",
     "@pinata/sdk": "^2.1.0",
     "@prisma/client": "^5.21.1",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
@@ -26,6 +28,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.95.3",
+    "@t3-oss/env-nextjs": "^0.12.0",
     "@thirdweb-dev/storage": "^2.0.15",
     "@web3-storage/w3up-client": "^16.2.0",
     "ardrive-cli": "^2.0.6",
@@ -33,6 +36,7 @@
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.39.3",
     "form-data": "^4.0.0",
     "framer-motion": "^11.5.6",
     "fs-extra": "^11.2.0",

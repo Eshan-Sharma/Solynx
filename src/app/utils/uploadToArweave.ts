@@ -107,3 +107,4 @@ const getContentType = (filePath: string): string => {
 
   return contentTypes[extension] || "application/octet-stream";
 };
+ 

@@ -13,7 +13,6 @@ const isDirectory = async (source: string) => {
     return false;
   }
 };
-
 // Helper function to create a File-like object for Node.js
 function createFileLikeObject(
   content: Buffer,
