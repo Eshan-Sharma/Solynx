@@ -25,7 +25,7 @@ const order = {
     logger: pinoPrettyLogger({
       level: "info",
     }),
-    api: { key: "try_golem" },
+    api: { key: "8df837f55dbc40ed89d74d8ed9aa993c" },
   });
 
   try {
@@ -36,21 +36,39 @@ const order = {
       poolSize: { min: 1, max: 3 },
       order,
     });
-    // I have 5 parts of the task to perform in parallel
-    const data = [...Array(5).keys()];
-    const results = await Promise.allSettled(
-      data.map((i) =>
-        pool.withRental((rental) =>
-          rental
-            .getExeUnit()
-            .then((exe) =>
-              exe.run(
-                `echo "Part #${i} computed on provider ${exe.provider.name} with CPU:" && cat /proc/cpuinfo | grep 'model name'`,
-              ),
-            ),
-        ),
-      ),
-    );
+
+    // Process the @helloo folder
+    const results = await Promise.allSettled([
+      pool.withRental(async (rental) => {
+        const exe = await rental.getExeUnit();
+        
+        // Create working directory
+        await exe.run('mkdir -p /workdir/helloo');
+        
+        // Copy files from output/helloo to the worker
+        // Note: You'll need to implement the actual file transfer mechanism
+        await exe.run(`
+          cd /workdir/helloo && \
+          # Copy website files
+          echo "Processing website files..." && \
+          cp -r /* . && \
+          
+          # Install dependencies if needed
+          if [ -f "package.json" ]; then
+            npm install
+          fi && \
+          
+          # Run any necessary build steps
+          if [ -f "app.js" ]; then
+            echo "Found app.js, processing..." && \
+            node app.js
+          fi
+        `);
+        
+        return exe.run('ls -la /workdir/helloo');
+      })
+    ]);
+
     results.forEach((result) => {
       if (result.status === "fulfilled") {
         console.log("Success:", result.value.stdout);
@@ -58,6 +76,7 @@ const order = {
         console.log("Failure:", result.reason);
       }
     });
+
   } catch (err) {
     console.error("Failed to run the example", err);
   } finally {
